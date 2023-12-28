@@ -1,9 +1,6 @@
 from django.db import models
 
 
-# Create your models here.
-
-
 class Author(models.Model):
     name = models.CharField(max_length=100)
 
@@ -29,3 +26,4 @@ class Order(models.Model):
     buyer = models.ForeignKey("auth.User", related_name="orders", on_delete=models.CASCADE)
     order_id = models.CharField(max_length=100, null=True)
     invoice_url = models.CharField(max_length=100, null=True)
+    status = models.CharField(max_length=100, null=True)

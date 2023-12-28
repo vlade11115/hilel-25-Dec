@@ -11,4 +11,7 @@ router.register("authors", views.AuthorsDetail)
 router.register("orders", views.OrderViewSet)
 
 urlpatterns = router.urls
-urlpatterns += [path("api-token-auth/", rest_framework.authtoken.views.obtain_auth_token)]
+urlpatterns += [
+    path("api-token-auth/", rest_framework.authtoken.views.obtain_auth_token),
+    path("webhook-mono/", views.MonoAcquiringWebhookReceiver.as_view(), name="webhook-mono"),
+]

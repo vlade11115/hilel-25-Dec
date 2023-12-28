@@ -1,10 +1,12 @@
 from rest_framework import permissions
 from rest_framework import viewsets, generics
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
+from rest_framework.reverse import reverse
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from my_api.models import Author, Book, Order, BookType, OrderQuantity
-from .invoices import create_invoice
+from .invoices import create_invoice, verify_signature
 from .permissions import IsOwnerOrReadOnly
 from .serializers import AuthorSerializer, BookSerializer, OrderSerializer, BookTypeSerializer, OrderInputSerializer
 
@@ -48,5 +50,21 @@ class OrderViewSet(generics.ListAPIView, generics.RetrieveAPIView, generics.Dest
             q = OrderQuantity.objects.create(book=order_item["book"], quantity=order_item["quantity"])
             order.books.add(q)
         order.save()
-        create_invoice(order, "https://webhook.site/9dee6af0-a1ea-4bfb-81fe-6e42a50775d4")
+        create_invoice(order, reverse("webhook-mono", request=request))
+        # create_invoice(order, "https://webhook.site/9dee6af0-a1ea-4bfb-81fe-6e42a50775d4")
         return Response({"invoice_url": order.invoice_url})
+
+
+class MonoAcquiringWebhookReceiver(APIView):
+    def post(self, request):
+        try:
+            verify_signature(request)
+        except Exception:
+            return Response({"status": "error"}, status=400)
+        reference = request.data.get("reference")
+        order = Order.objects.get(id=reference)
+        if order.order_id != request.data.get("invoiceId"):
+            return Response({"status": "error"}, status=400)
+        order.status = request.data.get("status", "error")
+        order.save()
+        return Response({"status": "ok"})
