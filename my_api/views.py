@@ -59,7 +59,7 @@ class MonoAcquiringWebhookReceiver(APIView):
     def post(self, request):
         try:
             verify_signature(request)
-        except Exception:
+        except Exception as e:
             return Response({"status": "error"}, status=400)
         reference = request.data.get("reference")
         order = Order.objects.get(id=reference)
